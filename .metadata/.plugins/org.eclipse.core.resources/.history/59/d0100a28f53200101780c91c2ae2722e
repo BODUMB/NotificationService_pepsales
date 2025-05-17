@@ -1,0 +1,27 @@
+package com.example.demo.repository;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Repository;
+
+import com.example.demo.models.Notification;
+
+@Repository
+public class NotificationRepository {
+	
+	private final List<Notification> notifications = new ArrayList()<>();
+	
+
+    public void save(Notification notification) {
+        notifications.add(notification);
+    }
+    
+
+    public List<Notification> findByUserId(String userId) {
+        return notifications.stream()
+                .filter(n -> n.getUserId().equals(userId))
+                .collect(Collectors.toList());
+    }
+}

@@ -1,0 +1,53 @@
+package com.example.queue;
+
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.example.demo.models.Notification;
+import com.example.demo.repository.NotificationRepository;
+
+import jakarta.annotation.PostConstruct;
+
+@Component
+public class NotificationQueueProcessor {
+	private final BlockingQueue<Notification> queue = new LinkedBlockingQueue()<>();
+
+    @Autowired
+    private NotificationRepository repository;
+
+    @PostConstruct
+    public void start() {
+        Thread processorThread = new Thread(() -> {
+            while (true) {
+                try {
+                    Notification notification = queue.take();
+                    boolean sent = send(notification);
+                    notification.setSent(sent);
+                    repository.save(notification);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        });
+        processorThread.setDaemon(true);
+        processorThread.start();
+    }
+
+    public void addToQueue(Notification notification) {
+        queue.offer(notification);
+    }
+
+    private boolean send(Notification notification) {
+        try {
+            System.out.println("Sending " + notification.getType() + " to " + notification.getUserId() + ": " + notification.getMessage());
+            Thread.sleep(500); // simulate delay
+            return true;
+        } catch (Exception e) {
+            System.err.println("Failed to send: " + e.getMessage());
+            return false;
+        }
+    }
+}
